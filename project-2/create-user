@@ -1,0 +1,174 @@
+#!/usr/bin/bash
+
+# Test reading uid from /etc/passwd
+# create_user
+#	Creates a new user with a home dir, bash as their shell, and a primary group
+
+# check for sudo/root
+if [ $EUID != 0 ]; then
+  echo "$0: Script requires root privileges"
+  exit 1
+fi
+
+# Options
+# -s EXECUTABLE-FILE
+#   Assign a shell for the user to use. Defaults to /usr/bin/bash if not used/specified
+
+check_name () { 
+  # Checks if a given string is a valid name for a user or group. Returns 1 if the name doesn't meet the requirements
+  # Technically usernames don't have to obey these restrictions (according the man page) but it seems like a good practice
+  # Names may have the followign characters:
+  #   upper and lowercase letters
+  #   digits 
+  #   underscores
+  #   dashes
+  # Group name must obey the following criteriai
+  #   No fully numeric names
+  #   . and .. not permitted
+  #   dashes not at the beginning 
+  #   $ only at the end
+  #   Max length of 32 chars
+  # NOTE: while characteerse like $ and - are allowed in certain scenarios, they must be escaped when passed as an argument
+	#				Not esacping these characters will result in parsing errors.
+	name=$1
+  declare -a regex_arr=("[^A-Za-z0-9_\\$\\-]+" "^[0-9]+$" "^-" "\\$.+")
+
+  if [[ ${#name} -gt 32 ]]; then
+		return 1
+  fi
+
+  for regex in ${regex_arr[@]}; do
+    result=$(echo $name | grep -iE $regex)
+		if [[ -n $result ]]; then
+			return 1
+    fi
+  done
+  return 0
+}
+
+get_next_ID () { 	
+	# Gets next available GID/UID from /etc/passwd and /etc/group
+  while getopts ":gu" opts; do
+    case $opts in
+      g)  # GID
+        file="/etc/group"
+        column=2
+        ;;
+      u)  # UID
+        file="/etc/passwd"
+        column=3
+        ;;
+      *)
+        echo "$0: $FUNCNAME: Syntax: get_next_ID [-g|-u]"
+        echo "-g: GID  -u: UID"
+        exit 1
+        ;;
+    esac
+  done
+  echo "$(($(grep -Ev ":[0-9]{1,3}:|:6553[3-4]:" $file | cut -d ":" -f 3 | sort -gr | head -n 1)+1))"
+}
+
+shell=/usr/bin/bash
+
+while getopts ":hs:g:" opts; do
+  case $opts in
+    s)
+      # This only checks if it's executable, doesn't check if it's a valid shell program
+      if [[ -x $OPTARG ]]; then
+        shell=$OPTARG
+      elif [[ -n $OPTARG ]]; then
+        echo "[Error] $OPTARG is not an executable"
+        exit 1
+      fi
+      ;;
+    g) # Adding Additional Groups
+      # user provides groups as a string where each group is separated by spaces
+      # ex. "group1 group2 wheel"
+      declare -a aux_groups=$OPTARG
+      for groupname in $aux_groups[@];do
+				check_name $groupname
+				if [[ $? -eq 1 ]];then
+					echo "$0: Invalid group name: $groupname"
+					exit 1 # maybe?
+				fi
+			done
+			;;
+
+    *|h|help)
+      echo "Usage: create-user [s|g]" # Finish this help command
+      exit 0
+      ;;
+  esac
+done
+
+# shift flags to get arguments
+shift $(($OPTIND-1))
+username=$1
+
+check_name $username
+if [[ $? -eq 1 ]];then
+	echo "$0: Invalid user name: $username"
+	exit 1 #maybe?
+elif [[ -n $(echo /etc/passwd | grep -iE "^$username:") ]]; then
+	echo "$0: Username has been taken: $username"
+	exit 1
+fi
+
+uid=$(get_next_ID -u)
+# Check if UID is an available GID
+# If not, get the next availalbe GID
+search_result=$(grep $uid /etc/group)
+if [[ -n $search_result ]];then
+  primary_gid=$(get_next_ID -g)
+else
+  primary_gid=$uid
+fi
+
+# Adding user to /etc/passwd
+home_dir="/home/$username"
+cat >> /etc/passwd <<- EOF
+	$username:x:$uid:$primary_gid::$home_dir:$shell
+EOF
+
+# Creating user's home dir
+if [[ -d $home_dir ]];then
+	echo $home_dir already exists.
+	if [[ force = false ]];then
+		echo Not copying /etc/skel into directory.
+	else
+		echo Copying /etc/skel into direcotry.
+		cp -r /etc/skel $home_dir
+	fi
+else
+	mkdir $home_dir
+	cp -r /etc/skel/. $home_dir
+fi
+chmod 700 $home_dir
+chown "$username:$username" $home_dir
+
+# Adding primary group to /etc/group
+cat >> /etc/group <<- EOF
+	$username:x:$primary_gid:
+EOF
+
+
+# Adding additional groups to /etc/group
+if [[ -n $group ]]; then
+  for groupname in $groups[@]; do
+    group_search=$(grep -iE "^$groupname:" /etc/group)
+    if [[ -n $group_search ]];then
+      current_members=$(echo $group_search | cut -d ":" -f 4)
+      if [[ -n current_members ]]; then
+        sed "/$group_search/s/$/$current_members,$username/" /etc/group
+      else
+        sed "/$group_search/s/$/$username/" /etc/group
+      fi
+    else
+      aux_GID=$(get_next_ID -g)
+      cat >> /etc/group <<- EOF
+				$groupname:x:$aux_GID:
+			EOF
+    fi
+  done
+fi
+
