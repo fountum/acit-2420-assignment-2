@@ -1,0 +1,67 @@
+#!/usr/bin/bash
+
+# check if script ran with root privileges
+if [ $EUID != 0 ]; then
+  echo '[Error] This script requires root privileges'
+  exit 1
+fi
+
+while getopts ":u" opts; do
+	case $opts in
+		u)
+			target_user=$OPTARG
+			;;
+		*)
+			echo "Something"
+			;;
+	esac
+done
+
+# default values
+target_user=$SUDO_USER
+
+# The paths in this array intentionally exclude the leading ./ so that it be reused in the home directory
+declare -a config_files=("bin/sayhi" "bin/install-fonts" "config/kak/kakrc" "config/tmux/tmux.conf" "home/bashrc")
+declare -a req_packages=("kakoune" "tmux")
+
+
+# let's assume they're not doing this at the root user...
+home_dir="/home/$target_user"
+
+# Check if the configuration files exist
+
+for file in ${config_file[@]}; do
+	# Check the if the home directory exists
+	if [[ ! -f "./$file" ]]; then
+		echo "$0: config file not found: $file"
+		exit 1
+	fi
+done
+
+# Check if required packages are installed on the system
+for package in ${req_packages[@]};do
+	output=$(pacman -Q $package)
+	if [[ $? -eq 1 ]];then
+		echo "$0: $output"
+		exit 1
+	fi
+done
+
+# Check the if the home directory exists
+if [[ ! -d $home_dir ]]; then
+	echo "$0: $home_dir is not a directory "
+	exit 1
+fi
+
+# create symlinks for config files in home directory
+for file in ${config_files[@]};do
+	echo "Creating link to ./$file"
+	ln -s "./$file" "$home_dir/$file"
+done
+
+echo "$0: script complete"
+# SUDO_USER
+# SUDO_UID
+# SUDO_HOME
+
+
