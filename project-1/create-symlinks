@@ -22,7 +22,11 @@ target_user=$SUDO_USER
 
 # symlink_targets: target dir/files for the symbolic links.
 # The paths in this array intentionally exclude the leading ./ so that it be reused in the home directory
-declare -a symlink_targets=("bin" "config" "home/bashrc")
+# [target]=link
+declare -A symlink_targets
+symlink_targets["./bin"]="bin"
+symlink_targets["./config"]=".config"
+symlink_targets["./home/bashrc"]="~/.bashrc"
 
 # req_packages: files in config require these packages to be installed
 declare -a req_packages=("kakoune" "tmux")
@@ -56,9 +60,9 @@ if [[ ! -d $home_dir ]]; then
 fi
 
 # create symlinks for config files in home directory
-for file in ${config_files[@]};do
-	echo "Creating link to ./$file"
-	ln -s "./$file" "$home_dir/$file"
+for target in ${!symlink_targets[@]};do
+	echo "$home_dir/$symlink_targets[$target] <-- ./$target"
+	ln -s  "$home_dir/$symlink_targets[$target]" "./$target"
 done
 
 echo "$0: script complete"
