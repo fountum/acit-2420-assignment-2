@@ -36,9 +36,9 @@ home_dir="/home/$target_user"
 
 # Check if the configuration files exist
 for target in ${!symlink_targets[@]}; do
-	# Check the if the home directory exists
-	if [[ ! -f "$target" ]]; then
-		echo "$0: config file not found: $target"
+	# Check the if the file exists
+	if [[ ! -e "$target" ]]; then
+		echo "$0: config file/dir not found: $target"
 		exit 1
 	fi
 done
