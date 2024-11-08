@@ -23,9 +23,9 @@ target_user=$SUDO_USER
 # symlink_targets: target dir/files for the symbolic links.
 # [target]=link
 declare -A symlink_targets
-symlink_targets["./bin"]="bin"
-symlink_targets["./config"]=".config"
-symlink_targets["./home/bashrc"]="~/.bashrc"
+symlink_targets["$(pwd)/bin"]="bin"
+symlink_targets["$(pwd)/config"]=".config"
+symlink_targets["$(pwd)/home/bashrc"]=".bashrc"
 
 # req_packages: files in config require these packages to be installed
 declare -a req_packages=("kakoune" "tmux")
@@ -37,8 +37,9 @@ home_dir="/home/$target_user"
 # Check if the configuration files exist
 for target in ${!symlink_targets[@]}; do
 	# Check the if the file exists
+	echo $target
 	if [[ ! -e "$target" ]]; then
-		echo "$0: config file/dir not found: $target"
+		echo "$0: config file or dir not found: $target"
 		exit 1
 	fi
 done
@@ -60,8 +61,8 @@ fi
 
 # create symlinks for config files in home directory
 for target in ${!symlink_targets[@]};do
-	echo "$home_dir/$symlink_targets[$target] <-- ./$target"
-	ln -s  "$home_dir/$symlink_targets[$target]" "./$target"
+	echo "$home_dir/${symlink_targets[$target]} <-- $target"
+	ln -s  "$target" "$home_dir/${symlink_targets[$target]}" 
 done
 
 echo "$0: script complete"
