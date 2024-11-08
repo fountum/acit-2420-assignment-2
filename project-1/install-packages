@@ -21,7 +21,8 @@ while getopts ":cd" opts; do
       ;;
 		i) # ignore default packages
 			default_packages=""
-    *)
+			;;
+		*)
       echo $0: Invalid option provided, this script only takes -c
       exit 1
       ;;
