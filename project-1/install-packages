@@ -40,13 +40,14 @@ if [[ -z $package_file ]]; then
 elif [[ ! -f $package_file ]]; then
 	echo "0: $package_file not readable"
 	exit 1
+else
+	# Parse packages from package_file
+	# Packages should be separated by spaces or new line
+	cat $1 | while read p; do
+		packages="$packages $p"
+	done
 fi
 
-# Parse packages from package_file
-# Packages should be separated by spaces or new line
-cat $1 | while read p; do
-	packages="$packages $p"
-done
 
 # Checking if any packages are going to be installed
 if [[ ${#packages} -eq 0 ]];then
