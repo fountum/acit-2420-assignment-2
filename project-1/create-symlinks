@@ -21,7 +21,6 @@ done
 target_user=$SUDO_USER
 
 # symlink_targets: target dir/files for the symbolic links.
-# The paths in this array intentionally exclude the leading ./ so that it be reused in the home directory
 # [target]=link
 declare -A symlink_targets
 symlink_targets["./bin"]="bin"
@@ -36,10 +35,10 @@ declare -a req_packages=("kakoune" "tmux")
 home_dir="/home/$target_user"
 
 # Check if the configuration files exist
-for file in ${symlink_targets[@]}; do
+for target in ${!symlink_targets[@]}; do
 	# Check the if the home directory exists
-	if [[ ! -f "./$file" ]]; then
-		echo "$0: config file not found: $file"
+	if [[ ! -f "$target" ]]; then
+		echo "$0: config file not found: $target"
 		exit 1
 	fi
 done
