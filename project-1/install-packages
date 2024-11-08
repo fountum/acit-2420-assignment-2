@@ -60,9 +60,9 @@ pacman -Syu
 
 # Install selected packages
 if [[ confirm = true ]]; then
-  pacman -S packages
+  pacman -S $packages
 else
-  pacman -S --noconfirm packages
+  pacman -S --noconfirm $packages
 fi
 
 echo "$0: script completed"
