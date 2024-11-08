@@ -1,0 +1,66 @@
+#!/usr/bin/bash
+
+# check if script ran with root privileges
+if [ $EUID != 0 ]; then
+  echo '[Error] This script requires root privileges'
+  exit 1
+fi
+
+# Options:
+#   -c: confirm installation
+#     For bug testing. Script will ask for confirmation before insalling packages
+
+# default options
+confirm=false
+default_packages="kakoune tmux"
+
+while getopts ":cd" opts; do
+  case $opts in
+    c) # show confirmation prompt when installing packages
+      confirm=true
+      ;;
+		i) # ignore default packages
+			default_packages=""
+    *)
+      echo $0: Invalid option provided, this script only takes -c
+      exit 1
+      ;;
+  esac
+done
+
+# shift options to get arguments
+shift $($OPTIND-1)
+package_file=$1
+
+# Check if user passed a list of packages as a readable file
+packages=$default_packages
+if [[ -z $package_file ]]; then
+	echo "$0: no package list provided."
+elif [[ ! -f $package_file ]]; then
+	echo "0: $package_file not readable"
+	exit 1
+fi
+
+# Parse packages from package_file
+# Packages should be separated by spaces or new line
+cat $1 | while read p; do
+	packages="$packages $p"
+done
+
+# Checking if any packages are going to be installed
+if [[ ${#packages} -eq 0 ]];then
+	echo "$0: no packages installed."
+	exit 1
+fi
+
+# Refresh package DB and upgrade existing pakabes
+pacman -Syu
+
+# Install selected packages
+if [[ confirm = true ]]; then
+  pacman -S packages
+else
+  pacman -S --noconfirm packages
+fi
+
+echo "$0: script completed"
