@@ -6,19 +6,21 @@ if [ $EUID != 0 ]; then
   exit 1
 fi
 
-while getopts ":u" opts; do
+# default values/behaviours
+target_user=$SUDO_USER
+flags=""
+
+while getopts ":f" opts; do
 	case $opts in
-		u)
-			target_user=$OPTARG
+		f)
+			flags="$flags -f"
 			;;
-		*)
+		*|h|help)
 			echo "Something"
 			;;
 	esac
 done
 
-# default values
-target_user=$SUDO_USER
 
 # symlink_targets: target dir/files for the symbolic links.
 # [target]=link
@@ -61,8 +63,7 @@ fi
 
 # create symlinks for config files in home directory
 for target in ${!symlink_targets[@]};do
-	echo "$home_dir/${symlink_targets[$target]} <-- $target"
-	ln -s  "$target" "$home_dir/${symlink_targets[$target]}" 
+	ln -s $flags "$target" "$home_dir/${symlink_targets[$target]}" 
 done
 
 echo "$0: script complete"
