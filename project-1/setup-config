@@ -25,6 +25,14 @@ usage () {
 	echo " -f						Force copying /etc/skel into new user's home directory"
 }
 
+# if the last program returns an exit code not equal to 0, set error to true
+# Error will make the script echo that an error happened
+check_exit_code () {
+	if [[ $? -ne 0 ]];then
+		error=true
+	fi
+}
+
 while getopts ":pshl:f" opts;do
 	case $opts in
 		p)
@@ -67,5 +75,9 @@ case $scripts in
 		;;
 esac
 
-echo "$0: script completed"
-
+check_exit_code
+if [[ $error = true ]];then
+	echo "$0: error occured"
+else
+	echo "$0: script completed"
+fi

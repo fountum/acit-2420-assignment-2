@@ -52,5 +52,7 @@ pacman -Syu --noconfirm
 # Install selected packages
 # --noconfirm doesn't prompt user for confirmation before installing packages
 pacman -S --noconfirm $packages
-
+if [[ $? -eq 1 ]];then
+	exit 1
+fi
 echo "$0: script completed"
