@@ -134,7 +134,7 @@ if [[ $? -eq 1 ]];then
 
 # check if name is taken
 # matching the first field by wrapping the username in ^ (start of line) and : (delimiter of files)
-elif [[ -n $(echo /etc/passwd | grep -iE "^$username:") ]]; then
+elif [[ -n $(grep -E "^$username:" /etc/passwd) ]]; then
 	echo "$0: Username has been taken: $username"
 	exit 1
 fi
