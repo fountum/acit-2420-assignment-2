@@ -72,13 +72,6 @@ check_name () {
     fi
   done
 
-	# check if name is taken
-	# matching the first field by wrapping the username in ^ (start of line) and : (delimiter of files)
-	if [[ -n $(echo $file | grep -iE "^$username:") ]]; then
-		echo "$0: Name has been taken in $file: $username"
-		exit 1
-	fi
-
   return 0
 }
 
@@ -117,6 +110,7 @@ while getopts ":hs:g:" opts; do
       elif [[ -n $OPTARG ]]; then
         echo "$0: $OPTARG is not an executable"
         exit 1
+			# something here
       fi
       ;;
     g) # Adding Additional Groups
@@ -146,8 +140,13 @@ username=$1
 check_name $username
 if [[ $? -eq 1 ]];then
 	exit 1
-fi
 
+# check if name is taken
+# matching the first field by wrapping the username in ^ (start of line) and : (delimiter of files)
+elif [[ -n $(echo /etc/passwd | grep -iE "^$username:") ]]; then
+	echo "$0: Username has been taken: $username"
+	exit 1
+fi
 
 uid=$(get_next_ID -u)
 # Check if UID is an available GID
