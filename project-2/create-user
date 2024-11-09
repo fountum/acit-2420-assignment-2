@@ -153,12 +153,14 @@ home_dir="/home/$username"
 cat >> /etc/passwd <<- EOF
 	$username:x:$uid:$primary_gid::$home_dir:$shell
 EOF
-
+echo "$0: User $username created."
 # Adding primary group to /etc/group
 # >> to append to file instead of overwrite
 cat >> /etc/group <<- EOF
 	$username:x:$primary_gid:
 EOF
+
+echo "$0: Group $username created"
 
 # Creating user's home dir
 if [[ -d $home_dir ]];then
@@ -178,6 +180,8 @@ else
 	
 	# make directory rwx by owner only
 	# reference: I looked at the other home directories
+	
+	echo Copying /etc/skel into direcotry.
 	chmod 700 $home_dir
 	cp -r /etc/skel/. $home_dir
 	# transfer user and group ownership to new user and their primary group 
@@ -211,6 +215,12 @@ if [[ -n $aux_groups ]]; then
       cat >> /etc/group <<- EOF
 				$groupname:x:$aux_GID:$username
 			EOF
+			echo "$0: Group $groupname created"
     fi
   done
 fi
+
+# set a password for the user
+passwd $username
+
+echo "$0: script complete"
