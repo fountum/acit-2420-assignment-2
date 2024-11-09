@@ -12,8 +12,6 @@ scripts=3
 # package list for install-packages
 package_file="packages"
 
-# install-packages flags
-ip_flags=""
 # create-symlinks flags
 cs_flags=""
 
@@ -23,12 +21,11 @@ usage () {
 	echo " -h						Display this help message"
 	echo " -p						Only install packages"
 	echo " -s						Only create symbolic link"
-	echo " -c						Show a confirmation prompt before installing packages"
 	echo " -l						FILE Specify a list of packages to install"
 	echo " -f						Force copying /etc/skel into new user's home directory"
 }
 
-while getopts ":pshcl:f" opts;do
+while getopts ":pshl:f" opts;do
 	case $opts in
 		p)
 			# run install-packages onlyi
@@ -37,10 +34,6 @@ while getopts ":pshcl:f" opts;do
 		s)
 			# run create-symlinks only
 			scripts=2
-			;;
-		c)
-			# enable confirmations for install-packages
-			ip_flags="$ip_flags -c"
 			;;
 		l)
 			# pass a file to use in install-packages
@@ -63,13 +56,13 @@ done
 
 case $scripts in
 	1)
-		./install-packages $ip_flags $package_file
+		./install-packages $package_file
 		;;
 	2)
 		./create-symlinks $cs_flags
 		;;
 	3)
-		./install-packages $ip_flags $package_file
+		./install-packages $package_file
 		./create-symlinks $cs_flags
 		;;
 esac

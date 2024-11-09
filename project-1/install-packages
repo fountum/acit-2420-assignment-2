@@ -11,18 +11,11 @@ usage () {
 	echo "FILE is a list of packages to install separated by new lines or whitespace"
 	echo "Options:"
 	echo " -h						Display this help message"
-	echo " -c						Show a confirmation prompt before installing packages"
 }
 
-
-# default options
-confirm=false
-
-while getopts ":c" opts; do
+# get options from CLI
+while getopts ":h" opts; do
   case $opts in
-    c) # show confirmation prompt before installing packages
-      confirm=true
-      ;;
 		*|h|help)
       usage
 			exit 1
@@ -57,10 +50,7 @@ packages=$(cat $package_file | tr '\n' ' ')
 pacman -Syu --noconfirm
 
 # Install selected packages
-if [[ confirm = true ]]; then
-  pacman -S $packages
-else
-  pacman -S --noconfirm $packages
-fi
+# --noconfirm doesn't prompt user for confirmation before installing packages
+pacman -S --noconfirm $packages
 
 echo "$0: script completed"
