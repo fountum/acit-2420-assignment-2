@@ -32,12 +32,12 @@ done
 
 # shift options to get arguments
 shift $(($OPTIND-1))
+package_file=$1
+
 if [[ -z $package_file ]];then
 	usage
 	exit 1
 fi
-
-package_file=$1
 
 # Check if script was passed a readable file
 if [[ ! -f $package_file ]]; then
