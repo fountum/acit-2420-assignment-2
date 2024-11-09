@@ -77,7 +77,7 @@ force=false
 
 # options
 while getopts ":hs:g:f" opts; do
-  case $opts in
+	case $opts in
     s)
 			# Change what shell to give the user
       # This only checks if it's executable, doesn't check if it's a valid shell program
@@ -170,7 +170,7 @@ if [[ -d $home_dir ]];then
 		echo Copying /etc/skel into direcotry.
 		chmod 700 $home_dir
 		cp -r /etc/skel/. $home_dir
-		chown "$username:$username" $home_dir $home_dir/.
+		chown -R "$username:$username" $home_dir
 	fi
 else
 	echo "Creating $home_dir"
@@ -181,7 +181,7 @@ else
 	chmod 700 $home_dir
 	cp -r /etc/skel/. $home_dir
 	# transfer user and group ownership to new user and their primary group 
-	chown "$username:$username" $home_dir $home_dir/.
+	chown -R "$username:$username" $home_dir
 fi
 
 
@@ -189,8 +189,8 @@ fi
 # Adding additional groups to /etc/group
 # I heard from someone that you don't need to do this but I already made it
 # Only if the instructions were more specific on the requirements
-if [[ -n $group ]]; then
-  for groupname in $groups[@]; do
+if [[ -n $aux_groups ]]; then
+  for groupname in ${aux_groups[@]}; do
 		# Check if group exists
     group_search=$(grep -iE "^$groupname:" /etc/group)
     if [[ -n $group_search ]];then
@@ -202,17 +202,14 @@ if [[ -n $group ]]; then
 			#		3rd field is the target for subsitution
 			#			$ represents the end of the string
 			#		4th field is the string to subsitute with
+			# -i flag makes the changes to the file
 			# reference: https://www.gnu.org/software/sed/manual/sed.html#sed-script-overview
 			# & https://www.gnu.org/software/sed/manual/sed.html#sed-commands-summary
-      if [[ -n current_members ]]; then
-        sed "/$group_search/s/$/$current_members,$username/" /etc/group
-      else
-        sed "/$group_search/s/$/$username/" /etc/group
-      fi
+			sed -i "/$group_search/s/$/,$username/" /etc/group
     else
       aux_GID=$(get_next_ID /etc/group)
       cat >> /etc/group <<- EOF
-				$groupname:x:$aux_GID:
+				$groupname:x:$aux_GID:$username
 			EOF
     fi
   done
