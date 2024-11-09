@@ -1,0 +1,62 @@
+#!/usr/bin/bash
+
+# setup-config
+#		This script executes the scripts install-packages and/or create-symlinks.
+
+# Variables behaviour
+# The value of scripts determins which scripts are installed
+# 1 = install-packages
+# 2 = create-symlinks
+# 3 = all
+scripts=3
+# package list for install-packages
+package_file="./package"
+
+# install-packages flags
+ip_flags=""
+# create-symlinks flags
+cs_flags=""
+
+while getopts ":pshcl:f" opts;do
+	case $opts in
+		p)
+			# run install-packages onlyi
+			scripts=1
+			;;
+		s)
+			# run create-symlinks only
+			scripts=2
+			;;
+		c)
+			# enable confirmations for install-packages
+			ip_flags="$ip_flags -c"
+			;;
+		l)
+			# pass a file to use in install-packages
+			package_file=$OPTARG
+			;;
+		f)
+			# enable -f/force option for create-symlinks
+			cs_flags="$cs_flags -f"
+			;;
+		*|h|help)
+			# help
+			;;
+	esac
+done
+
+case $scripts in;
+	1)
+		./install-packages $ip_flags $package_list
+		;;
+	2)
+		./create-symlinks $cs_flags
+		;;
+	3)
+		./install-packages $ip_flags $package_list
+		./create-syminks $cs_flags
+		;;
+esac
+
+echo "$0: script completed"
+
