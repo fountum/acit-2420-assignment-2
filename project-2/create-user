@@ -31,21 +31,6 @@ check_name () {
   # NOTE: while characters like $ and - are allowed in certain scenarios, they must be escaped when passed as an argument
 	#				Not esacping these characters will result in parsing errors.
 	name=$1
-	while getopts ":gu" opts; do
-    case $opts in
-      g)  # GID
-        file="/etc/group"
-        ;;
-      u)  # UID
-        file="/etc/passwd"
-        ;;
-      *)
-        echo "$0: $FUNCNAME: Syntax: get_next_ID [-g|-u]"
-        echo "-g: GID  -u: UID"
-        exit 1
-        ;;
-    esac
-  done
 
 	# Regex explainations
 	#		[^A-Za-z0-9_\\$\\-]+	: match name if it contains a character not in this list (Alnum, $, _, -)
