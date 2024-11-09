@@ -65,13 +65,17 @@ done
 case $scripts in
 	1)
 		./install-packages $package_file
+		check_exit_code
 		;;
 	2)
 		./create-symlinks $cs_flags
+		check_exit_code
 		;;
 	3)
 		./install-packages $package_file
+		check_exit_code
 		./create-symlinks $cs_flags
+		check_exit_code
 		;;
 esac
 
