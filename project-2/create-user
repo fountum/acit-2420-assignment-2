@@ -10,10 +10,14 @@ if [ $EUID != 0 ]; then
   exit 1
 fi
 
-# Options
-# -s EXECUTABLE-FILE
-#   Assign a shell for the user to use. Defaults to /usr/bin/bash if not used/specified
-
+usage () {
+	echo "Usage: $0 [-h|-s|-g|-f] USERNAME"
+	echo "Options:"
+	echo " -h			Display this help message"
+	echo " -s			EXECUTABLE Specify a shell for the user"
+	echo " -g			GROUP... Specify additional groups to add the user to. If it doesn't exist, it will be created"
+	echo " -f			Copy /etc/skel into home directory even if it exists already"
+}
 check_name () { 
   # Checks if a given string is a valid name for a user or group. Returns 1 if the name doesn't meet the requirements
   # Technically usernames don't have to obey these restrictions (according the man page) but it seems like a good practice
@@ -62,7 +66,7 @@ check_name () {
 
 get_next_ID () { 	
 	# Gets next available GID/UID from /etc/passwd and /etc/group
-  while getopts ":gu" opts; do
+	while getopts ":gu" opts; do
     case $opts in
       g)  # GID
         file="/etc/group"
@@ -82,10 +86,13 @@ get_next_ID () {
   echo "$(($(grep -Ev ":[0-9]{1,3}:|:6553[3-4]:" $file | cut -d ":" -f 3 | sort -gr | head -n 1)+1))"
 }
 
+# default options/behaivours
 # default shell to give users
 shell=/usr/bin/bash
+force=false
 
-while getopts ":hs:g:" opts; do
+# options
+while getopts ":hs:g:f" opts; do
   case $opts in
     s)
 			# Change what shell to give the user
@@ -95,31 +102,46 @@ while getopts ":hs:g:" opts; do
       elif [[ -n $OPTARG ]]; then
         echo "$0: $OPTARG is not an executable"
         exit 1
-			# something here
+			else
+				usage
+				exit 1
       fi
       ;;
     g) # Adding Additional Groups
       # user provides groups as a string where each group is separated by spaces
       # ex. "group1 group2 wheel"
-      declare -a aux_groups=$OPTARG
-      for groupname in $aux_groups[@];do
+			
+			if [[ -z $OPTARG ]];then
+				usage
+				exit 1
+			fi
+
+			declare -a aux_groups=$OPTARG
+			for groupname in ${aux_groups[@]};do
 				check_name $groupname
 				if [[ $? -eq 1 ]];then
 					exit 1
 				fi
 			done
 			;;
-
+		f)
+			# copy /etc/skel to home dir when the dir already exists
+			force=true
+			;;
     *|h|help)
-      echo "Usage: create-user [s|g]" # Finish this help command
-      exit 0
+			usage
+      exit 1
       ;;
   esac
-donei
+done
 
 # shift flags to get arguments
-shift $(($OPTIND-1))
+shift $(($OPTIND - 1))
 username=$1
+if [[ -z $username ]];then
+	usage
+	exit 1
+fi
 
 # checking if username meets standards and is available
 check_name $username
@@ -132,12 +154,12 @@ elif [[ -n $(echo /etc/passwd | grep -iE "^$username:") ]]; then
 	echo "$0: Username has been taken: $username"
 	exit 1
 fi
-
+get_next_ID -u
 uid=$(get_next_ID -u)
 # Check if UID is an available GID
 # If not, get the next availalbe GID
 if [[ -n $(grep $uid /etc/group) ]];then
-  primary_gid=$(get_next_ID -g)
+	primary_gid=$(get_next_ID -g)
 else
   primary_gid=$uid
 fi
@@ -153,7 +175,7 @@ EOF
 if [[ -d $home_dir ]];then
 	# if the directory already exists, only copy /etc/skel into if -f was passed as an option
 	echo $home_dir already exists.
-	if [[ force = false ]];then
+	if [[ $force = false ]];then
 		echo Not copying /etc/skel into directory.
 	else
 		echo Copying /etc/skel into direcotry.
