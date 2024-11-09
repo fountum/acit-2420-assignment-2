@@ -170,7 +170,7 @@ if [[ -d $home_dir ]];then
 		echo Copying /etc/skel into direcotry.
 		chmod 700 $home_dir
 		cp -r /etc/skel/. $home_dir
-		chown "$username:$username" $home_dir $home_dir/*
+		chown "$username:$username" $home_dir $home_dir/.
 	fi
 else
 	echo "Creating $home_dir"
@@ -181,7 +181,7 @@ else
 	chmod 700 $home_dir
 	cp -r /etc/skel/. $home_dir
 	# transfer user and group ownership to new user and their primary group 
-	chown "$username:$username" $home_dir $home_dir/*
+	chown "$username:$username" $home_dir $home_dir/.
 fi
 
 
