@@ -18,7 +18,7 @@ ip_flags=""
 cs_flags=""
 
 usage () {
-	echo "Usage: $0 [h|p|s|c|l|f]"
+	echo "Usage: $0 [OPTIONS]"
 	echo "Options:"
 	echo " -h						Display this help message"
 	echo " -p						Only install packages"

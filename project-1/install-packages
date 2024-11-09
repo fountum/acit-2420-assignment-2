@@ -6,9 +6,14 @@ if [ $EUID != 0 ]; then
   exit 1
 fi
 
-# Options:
-#   -c: confirm installation
-#     For bug testing. Script will ask for confirmation before insalling packages
+usage () {
+	echo "Usage: $0 [OPTIONS] FILE"
+	echo "FILE is a list of packages to install separated by new lines or whitespace"
+	echo "Options:"
+	echo " -h						Display this help message"
+	echo " -c						Show a confirmation prompt before installing packages"
+}
+
 
 # default options
 confirm=false
@@ -19,14 +24,19 @@ while getopts ":c" opts; do
       confirm=true
       ;;
 		*|h|help)
-      echo $0: Invalid option provided, this script only takes -c
-      exit 1
+      usage
+			exit 1
       ;;
   esac
 done
 
 # shift options to get arguments
 shift $(($OPTIND-1))
+if [[ -z $package_file ]];then
+	usage
+	exit 1
+fi
+
 package_file=$1
 
 # Check if script was passed a readable file

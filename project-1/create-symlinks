@@ -2,7 +2,7 @@
 
 # check if script ran with root privileges
 if [ $EUID != 0 ]; then
-  echo '[Error] This script requires root privileges'
+  echo "$0 This script requires root privileges"
   exit 1
 fi
 
@@ -10,20 +10,30 @@ fi
 target_user=$SUDO_USER
 flags=""
 
+
+usage () {
+	echo "Usage: $0 [OPTIONS]"
+	echo "Options:"
+	echo " -h						Display this help message"
+	echo " -f						Force copying /etc/skel into new user's home directory"
+}
+
 while getopts ":f" opts; do
 	case $opts in
 		f)
 			flags="$flags -f"
 			;;
 		*|h|help)
-			echo "Something"
+			usage
+			exit 1
 			;;
 	esac
 done
 
 
-# symlink_targets: target dir/files for the symbolic links.
-# [target]=link
+# symlink_targets: associative array of target dir/files for the symbolic links.
+# [target]=link_name
+# links go into home directory
 declare -A symlink_targets
 symlink_targets["$(pwd)/bin"]="bin"
 symlink_targets["$(pwd)/config"]=".config"
@@ -33,13 +43,12 @@ symlink_targets["$(pwd)/home/bashrc"]=".bashrc"
 declare -a req_packages=("kakoune" "tmux")
 
 
-# let's assume they're not doing this at the root user...
+# let's assume they're not doing this as the root user...
 home_dir="/home/$target_user"
 
 # Check if the configuration files exist
 for target in ${!symlink_targets[@]}; do
 	# Check the if the file exists
-	echo $target
 	if [[ ! -e "$target" ]]; then
 		echo "$0: config file or dir not found: $target"
 		exit 1
@@ -67,8 +76,5 @@ for target in ${!symlink_targets[@]};do
 done
 
 echo "$0: script complete"
-# SUDO_USER
-# SUDO_UID
-# SUDO_HOME
 
 
