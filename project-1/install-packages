@@ -26,7 +26,7 @@ while getopts ":c" opts; do
 done
 
 # shift options to get arguments
-shift $($OPTIND-1)
+shift $(($OPTIND-1))
 package_file=$1
 
 # Check if script was passed a readable file
@@ -47,7 +47,7 @@ done
 
 
 # Refresh package DB and upgrade existing pakabes
-pacman -Syu
+pacman -Syu --noconfirm
 
 # Install selected packages
 if [[ confirm = true ]]; then
