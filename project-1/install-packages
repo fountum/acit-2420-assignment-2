@@ -2,7 +2,7 @@
 
 # check if script ran with root privileges
 if [ $EUID != 0 ]; then
-  echo '[Error] This script requires root privileges'
+  echo '$0: This script requires root privileges'
   exit 1
 fi
 
@@ -12,17 +12,13 @@ fi
 
 # default options
 confirm=false
-default_packages="kakoune tmux"
 
-while getopts ":cd" opts; do
+while getopts ":c" opts; do
   case $opts in
-    c) # show confirmation prompt when installing packages
+    c) # show confirmation prompt before installing packages
       confirm=true
       ;;
-		i) # ignore default packages
-			default_packages=""
-			;;
-		*)
+		*|h|help)
       echo $0: Invalid option provided, this script only takes -c
       exit 1
       ;;
@@ -33,27 +29,22 @@ done
 shift $($OPTIND-1)
 package_file=$1
 
-# Check if user passed a list of packages as a readable file
-packages=$default_packages
-if [[ -z $package_file ]]; then
-	echo "$0: no package list provided."
-elif [[ ! -f $package_file ]]; then
-	echo "0: $package_file not readable"
+# Check if script was passed a readable file
+if [[ ! -f $package_file ]]; then
+	echo "0: $package_file is not a file"
 	exit 1
-else
-	# Parse packages from package_file
-	# Packages should be separated by spaces or new line
-	cat $1 | while read p; do
-		packages="$packages $p"
-	done
-fi
-
-
-# Checking if any packages are going to be installed
-if [[ ${#packages} -eq 0 ]];then
-	echo "$0: no packages installed."
+elif [[ ! -r $package_file ]];then
+	echo "0: $package_file is not readable"
 	exit 1
 fi
+
+# Parse packages from package_file
+# Every line of the file is appended to a single variable
+# New lines and white space act as delimiters between packages
+cat $1 | while read p; do
+	packages="$packages $p"
+done
+
 
 # Refresh package DB and upgrade existing pakabes
 pacman -Syu
