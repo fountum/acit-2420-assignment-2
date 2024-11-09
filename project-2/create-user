@@ -154,6 +154,12 @@ cat >> /etc/passwd <<- EOF
 	$username:x:$uid:$primary_gid::$home_dir:$shell
 EOF
 
+# Adding primary group to /etc/group
+# >> to append to file instead of overwrite
+cat >> /etc/group <<- EOF
+	$username:x:$primary_gid:
+EOF
+
 # Creating user's home dir
 if [[ -d $home_dir ]];then
 	# if the directory already exists, only copy /etc/skel into if -f was passed as an option
@@ -162,24 +168,23 @@ if [[ -d $home_dir ]];then
 		echo Not copying /etc/skel into directory.
 	else
 		echo Copying /etc/skel into direcotry.
+		chmod 700 $home_dir
 		cp -r /etc/skel/. $home_dir
+		chown "$username:$username" $home_dir $home_dir/*
 	fi
 else
 	echo "Creating $home_dir"
 	mkdir $home_dir
+	
+	# make directory rwx by owner only
+	# reference: I looked at the other home directories
+	chmod 700 $home_dir
 	cp -r /etc/skel/. $home_dir
+	# transfer user and group ownership to new user and their primary group 
+	chown "$username:$username" $home_dir $home_dir/*
 fi
-# make directory rwx by owner only
-# reference: I looked at the other home directories
-chmod 700 $home_dir
-# transfer user and group ownership to new user and their primary group 
-chown "$username:$username" $home_dir
 
-# Adding primary group to /etc/group
-# >> to append to file instead of overwrite
-cat >> /etc/group <<- EOF
-	$username:x:$primary_gid:
-EOF
+
 
 # Adding additional groups to /etc/group
 # I heard from someone that you don't need to do this but I already made it
