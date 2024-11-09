@@ -49,12 +49,9 @@ elif [[ ! -r $package_file ]];then
 fi
 
 # Parse packages from package_file
-# Every line of the file is appended to a single variable
 # New lines and white space act as delimiters between packages
-cat $1 | while read p; do
-	packages="$packages $p"
-done
-
+# Translates new lines to spaces
+packages=$(cat $package_file | tr '\n' ' ')
 
 # Refresh package DB and upgrade existing pakabes
 pacman -Syu --noconfirm
